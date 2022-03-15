@@ -1,0 +1,2 @@
+msgid "Phone"
+msgstr "Phone number"
