@@ -126,14 +126,21 @@ if (!class_exists('LbkCommentExtension')) {
                 'fb-comments', // Namespace
                 '/receive-callback', // Endpoint
                 array(
-                    'methods' => 'GET',
-                    'callback' => array($this, 'on_receive_comment_callback')
-                )
+                    array(
+                        'methods' => 'GET',
+                        'callback' => array($this, 'on_receive_comment_callback_test')
+                    ),
+                    array(
+                        'methods' => 'POST',
+                        'callback' => array($this, 'on_receive_comment_callback_real')
+                    )
+                ),
+                true
             );
         }
 
 
-        function on_receive_comment_callback(WP_REST_Request $request_data)
+        function on_receive_comment_callback_test(WP_REST_Request $request_data)
         {
 
             $parameters = $request_data->get_params();
@@ -142,6 +149,39 @@ if (!class_exists('LbkCommentExtension')) {
                 wp_mail('pysga1996@gmail.com', 'New Comment', 'Request body:' . $request_data->get_body());
                 echo $parameters['hub_challenge'];
             } echo '';
+
+//            file_put_contents(
+//                'fb-comments-log.txt',
+//                "\n" . $request_data.get_body(),
+//                FILE_APPEND
+//            );
+//            file_put_contents(
+//                'fb-comments-log.txt',
+//                "\n" . file_get_contents('php://input'),
+//                FILE_APPEND
+//            );
+        }
+
+        function on_receive_comment_callback_real(WP_REST_Request $request_data)
+        {
+            $data = json_decode($request_data->get_body());
+            $comment = $data['entry'][0]['changes'][0]['value'];
+            $comment_id = $comment['id'];
+            try {
+                $comment_time = new DateTime($comment['created_time']);
+                $fmt_comment_time = $comment_time->format('h:i:s a d/m/Y');
+            } catch (Exception $e) {
+                $fmt_comment_time = $e->getMessage();
+            }
+
+            $message = $comment['message'];
+            $user_id = $comment['from']['name'];
+            $user_name = $comment['from']['name'];
+            $email_body = "Bình luận (id: $comment_id) \r\n"
+                . "Từ người dùng (id: $user_id) - $user_name \r\n"
+                . "Thời gian: $fmt_comment_time \r\n"
+                . "Nội dung: $message \r\n";
+            wp_mail('pysga1996@gmail.com', "Bình luận mới từ người dùng $user_name", $email_body);
 
 //            file_put_contents(
 //                'fb-comments-log.txt',
