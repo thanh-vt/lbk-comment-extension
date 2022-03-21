@@ -6,3 +6,6 @@ msgstr "Either email or phone number is required."
 
 msgid "Error: Email or phone number is required. Hit the Back button on your Web browser and resubmit your comment with an email or phone number."
 msgstr "Error: Email or phone number is required. Hit the Back button on your Web browser and resubmit your comment with an email or phone number."
+
+msgid "Additional info"
+msgstr "Additional information"

@@ -20,3 +20,6 @@ msgstr "Số điện thoại hoặc email là bắt buộc."
 msgid "Error: Email or phone number is required. Hit the Back button on your Web browser and resubmit your comment with an email or phone number."
 msgstr "Lỗi: email hoặc số điện thoại bắt buộc nhập. Nhấp Quay lại trên trình duyệt và đăng bình luận kèm theo email hoặc số điện thoại."
 
+msgid "Additional info"
+msgstr "Thông tin bổ sung"
+

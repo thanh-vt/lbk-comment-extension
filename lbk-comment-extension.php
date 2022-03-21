@@ -23,7 +23,7 @@ if (!class_exists('LbkCommentExtension')) {
             load_plugin_textdomain('lbk-comment-extension', FALSE, dirname(plugin_basename(__FILE__)) . '/languages/');
             add_filter('comment_form_default_fields', array($this, 'custom_fields')); // filter to load fields input
             add_filter('comment_form_defaults', array($this, 'custom_notes')); // filter to load fields input
-            add_filter('comment_text', array($this, 'modify_comment')); // filter to modify fields to display
+//            add_filter('comment_text', array($this, 'modify_comment')); // filter to modify fields to display
             add_filter('preprocess_comment', array($this, 'verify_comment_meta_data')); // hook to validate fields input
             add_action('comment_post', array($this, 'save_comment_meta_data')); // hoot to save fields data
             add_action('add_meta_boxes_comment', array($this, 'extend_comment_add_meta_box')); // filter to load fields input in edit mode
@@ -99,8 +99,9 @@ if (!class_exists('LbkCommentExtension')) {
 
         function verify_comment_meta_data($commentdata)
         {
-            if ((empty($_POST['email']) && empty($_POST['phone'])))
+            if( get_current_user_id() == 0 && empty($_POST['email']) && empty($_POST['phone'])) {
                 wp_die(__('Error: Email or phone number is required. Hit the Back button on your Web browser and resubmit your comment with an email or phone number.', 'lbk-comment-extension'));
+            }
             return $commentdata;
         }
 
@@ -122,7 +123,7 @@ if (!class_exists('LbkCommentExtension')) {
 
         function extend_comment_add_meta_box()
         {
-            add_meta_box('phone', __('Comment Metadata - Extend Comment'), array($this, 'extend_comment_meta_box'), 'comment', 'normal', 'high');
+            add_meta_box('phone', __('Additional info', 'lbk-comment-extension'), array($this, 'extend_comment_meta_box'), 'comment', 'normal', 'high');
         }
 
         function extend_comment_meta_box($comment)
