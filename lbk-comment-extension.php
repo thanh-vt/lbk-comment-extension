@@ -74,16 +74,16 @@ if (!class_exists('LbkCommentExtension')) {
             $required_indicator = ' <span class="required" aria-hidden="true">*</span>';
             $required_text = sprintf(
             /* translators: %s: Asterisk symbol (*). */
-                ' <span class="required-field-message" aria-hidden="true">' . __( 'Required fields are marked %s' )
+                ' <span class="required-field-message" aria-hidden="true">' . __('Required fields are marked %s')
                 . '. ' . __('Either email or phone number is required.', 'lbk-comment-extension')
                 . '</span>',
-                trim( $required_indicator )
+                trim($required_indicator)
             );
             $defaults['comment_notes_before'] = sprintf(
                 '<p class="comment-notes">%s%s</p>',
                 sprintf(
                     '<span id="email-notes">%s</span>',
-                    __( 'Your email address will not be published.' )
+                    __('Your email address will not be published.')
                 ),
                 $required_text
             );
@@ -122,7 +122,7 @@ if (!class_exists('LbkCommentExtension')) {
 
         function extend_comment_add_meta_box()
         {
-            add_meta_box('title', __('Comment Metadata - Extend Comment'), 'extend_comment_meta_box', 'comment', 'normal', 'high');
+            add_meta_box('phone', __('Comment Metadata - Extend Comment'), array($this, 'extend_comment_meta_box'), 'comment', 'normal', 'high');
         }
 
         function extend_comment_meta_box($comment)
@@ -130,10 +130,20 @@ if (!class_exists('LbkCommentExtension')) {
             $phone = get_comment_meta($comment->comment_ID, 'phone', true);
             wp_nonce_field('extend_comment_update', 'extend_comment_update', false);
             ?>
-            <p class="comment-form-url">
-                <label for="phone"><?php _e('Phone'); ?></label>
-                <input type="text" name="phone" id="phone" value="<?php echo esc_attr($phone); ?>" class="widefat"/>
-            </p>
+            <table class="form-table editcomment" role="presentation">
+                <tbody>
+                <tr>
+                    <td class="first" style="width: 90px">
+                        <label for="phone"><?php echo __('Phone', 'lbk-comment-extension'); ?></label>
+                    </td>
+                    <td>
+                        <input type="text" name="phone" id="phone" value="<?php echo esc_attr($phone); ?>"
+                               class="widefat"/>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
             <?php
         }
 
@@ -229,6 +239,7 @@ if (!class_exists('LbkCommentExtension')) {
         {
             ?>
             <meta property="fb:app_id" content="684960049312590"/>
+            <meta property="fb:pages" content="100605922604178"/>
             <?php
         }
 
