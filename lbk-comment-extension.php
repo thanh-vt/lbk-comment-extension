@@ -18,9 +18,11 @@ if (!class_exists('LbkCommentExtension')) {
     {
         function __construct()
         {
+            add_option('require_email_or_phone', true);
             update_option('require_name_email', false, true);
             load_plugin_textdomain('lbk-comment-extension', FALSE, dirname(plugin_basename(__FILE__)) . '/languages/');
             add_filter('comment_form_default_fields', array($this, 'custom_fields')); // filter to load fields input
+            add_filter('comment_form_defaults', array($this, 'custom_notes')); // filter to load fields input
             add_filter('comment_text', array($this, 'modify_comment')); // filter to modify fields to display
             add_filter('preprocess_comment', array($this, 'verify_comment_meta_data')); // hook to validate fields input
             add_action('comment_post', array($this, 'save_comment_meta_data')); // hoot to save fields data
@@ -34,24 +36,25 @@ if (!class_exists('LbkCommentExtension')) {
         {
 
             $commenter = wp_get_current_commenter();
-            $req = get_option('require_name_email');
+//            $req = get_option('require_name_email');
+            $req = get_option('require_email_or_phone');
             $aria_req = ($req ? " aria-required='true'" : '');
 
             $fields['author'] = '<p class="comment-form-author">' .
                 '<label for="author">' . __('Name') . ($req ? '<span class="required">&nbsp;*</span>' : '') . '</label>' .
                 '<input id="author" name="author" type="text" value="' . esc_attr($commenter['comment_author']) .
-                '" size="30" tabindex="1"' . $aria_req . ' /></p>';
+                '" size="30" tabindex="1" ' . $aria_req . ' /></p>';
 
-//    $fields['email'] = '<p class="comment-form-email">' .
-//        '<label for="email">' . __('Email') . ($req ? '<span class="required">&nbsp;*</span>' : '') . '</label>' .
-//        '<input id="email" name="email" type="text" value="' . esc_attr($commenter['comment_author_email']) .
-//        '" size="30"  tabindex="2"' . $aria_req . ' /></p>';
+            $fields['email'] = '<p class="comment-form-email">' .
+                '<label for="email">' . __('Email') . '</label>' .
+                '<input id="email" name="email" type="text" value="' . esc_attr($commenter['comment_author_email']) .
+                '" size="30"  tabindex="2" ' . $aria_req . ' /></p>';
 
 //    $fields['url'] = '<p class="comment-form-url">' .
 //        '<label for="url">' . __('Website') . '</label>' .
 //        '<input id="url" name="url" type="text" value="' . esc_attr($commenter['comment_author_url']) .
 //        '" size="30"  tabindex="3" /></p>';
-            unset($fields['email']);
+//            unset($fields['email']);
             unset($fields['url']);
 
             $saveInfoCheckbox = $fields['cookies'];
@@ -65,6 +68,28 @@ if (!class_exists('LbkCommentExtension')) {
             return $fields;
         }
 
+        function custom_notes($defaults)
+        {
+            // Identify required fields visually.
+            $required_indicator = ' <span class="required" aria-hidden="true">*</span>';
+            $required_text = sprintf(
+            /* translators: %s: Asterisk symbol (*). */
+                ' <span class="required-field-message" aria-hidden="true">' . __( 'Required fields are marked %s' )
+                . '. ' . __('Either email or phone number is required.', 'lbk-comment-extension')
+                . '</span>',
+                trim( $required_indicator )
+            );
+            $defaults['comment_notes_before'] = sprintf(
+                '<p class="comment-notes">%s%s</p>',
+                sprintf(
+                    '<span id="email-notes">%s</span>',
+                    __( 'Your email address will not be published.' )
+                ),
+                $required_text
+            );
+            return $defaults;
+        }
+
         function save_comment_meta_data($comment_id)
         {
             if ((isset($_POST['phone'])) && ($_POST['phone'] != ''))
@@ -74,8 +99,8 @@ if (!class_exists('LbkCommentExtension')) {
 
         function verify_comment_meta_data($commentdata)
         {
-            if (!isset($_POST['phone']))
-                wp_die(__('Error: You did not add a phone number. Hit the Back button on your Web browser and resubmit your comment with a phone number.'));
+            if ((empty($_POST['email']) && empty($_POST['phone'])))
+                wp_die(__('Error: Email or phone number is required. Hit the Back button on your Web browser and resubmit your comment with an email or phone number.', 'lbk-comment-extension'));
             return $commentdata;
         }
 
@@ -84,8 +109,12 @@ if (!class_exists('LbkCommentExtension')) {
 
             $plugin_url_path = WP_PLUGIN_URL;
 
+            if ($email = get_comment_author_email(get_comment_ID())) {
+                $email = '<strong>Email:&nbsp;</strong><span>' . esc_attr($email) . '</span><br/>';
+                $text = $email . $text;
+            }
             if ($phone = get_comment_meta(get_comment_ID(), 'phone', true)) {
-                $phone = '<strong>' . esc_attr($phone) . '</strong><br/>';
+                $phone = '<strong>Sđt:&nbsp;</strong><span>' . esc_attr($phone) . '</span><br/>';
                 $text = $phone . $text;
             }
             return $text;
@@ -101,9 +130,9 @@ if (!class_exists('LbkCommentExtension')) {
             $phone = get_comment_meta($comment->comment_ID, 'phone', true);
             wp_nonce_field('extend_comment_update', 'extend_comment_update', false);
             ?>
-            <p>
+            <p class="comment-form-url">
                 <label for="phone"><?php _e('Phone'); ?></label>
-                <input type="text" name="phone" value="<?php echo esc_attr($phone); ?>" class="widefat"/>
+                <input type="text" name="phone" id="phone" value="<?php echo esc_attr($phone); ?>" class="widefat"/>
             </p>
             <?php
         }
@@ -148,7 +177,8 @@ if (!class_exists('LbkCommentExtension')) {
             if ($parameters['hub_verify_token'] === 'thanhvt') {
                 wp_mail('pysga1996@gmail.com', 'New Comment', 'Request body:' . $request_data->get_body());
                 echo $parameters['hub_challenge'];
-            } echo '';
+            }
+            echo '';
 
 //            file_put_contents(
 //                'fb-comments-log.txt',
@@ -195,9 +225,10 @@ if (!class_exists('LbkCommentExtension')) {
 //            );
         }
 
-        function hook_meta_fb_appid() {
+        function hook_meta_fb_appid()
+        {
             ?>
-            <meta property="fb:app_id" content="684960049312590" />
+            <meta property="fb:app_id" content="684960049312590"/>
             <?php
         }
 
